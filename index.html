@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0b111a">
+    <title>Table Trainer Pro</title>
+    
+    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIlRhYmxlIFRyYWluZXIgUHJvIiwKICAic2hvcnRfbmFtZSI6ICJUYWJsZSBUcmFpbmVyIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwYjExMWEiLAogICJ0aGVtZV9jb3VudCI6ICIjMGIxMTFhIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly9jZG4taWNvbnMtcG5nLmZsaXRpY29uLmNvbS81MTIvNDQ3MS80NDcxMzY0LnBuZyIsCiAgICAgICJzaXplcyI6ICI1MTJ4NTEyIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIgogICAgfQogIF0KfQ==">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+            user-select: none;
+        }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        @keyframes shake-horizontal {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70% { transform: translateX(-8px); }
+            20%, 40%, 60%, 80% { transform: translateX(8px); }
+        }
+        .animate-shake-horizontal { animation: shake-horizontal 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #5b5cf2; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+
+        .hidden { display: none !important; }
+        .blur-sm { filter: blur(4px); }
+    </style>
+</head>
+<body class="transition-colors duration-300 bg-[#0b111a]">
+    <div id="app-root" class="min-h-screen flex items-center justify-center p-4"></div>
+
+    <script>
+        // --- Service Worker for Full Offline ---
+        const swCode = `
+            const CACHE_NAME = 'table-trainer-v1';
+            const ASSETS = [
+                './',
+                './index.html',
+                'https://cdn.tailwindcss.com',
+                'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap'
+            ];
+            self.addEventListener('install', e => {
+                e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
+            });
+            self.addEventListener('fetch', e => {
+                e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
+            });
+        `;
+        const blob = new Blob([swCode], {type: 'application/javascript'});
+        const swUrl = URL.createObjectURL(blob);
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register(swUrl);
+        }
+
+        // --- SVGs ---
+        const icons = {
+            sun: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 6.34-1.41 1.41"/></svg>`,
+            moon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`,
+            chevronLeft: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>`,
+            pause: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`,
+            play: `<svg width="48" height="48" viewBox="0 0 24 24" fill="#5b5cf2" stroke="#5b5cf2" stroke-width="2"><path d="m5 3 14 9-14 9V3z"/></svg>`,
+            x: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12"/></svg>`,
+            check: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><path d="M20 6 9 17l-5-5"/></svg>`,
+            retry: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`
+        };
+
+        // --- State ---
+        let darkMode = true;
+        let screen = 'setup';
+        let isPaused = false;
+        let isShaking = false;
+        let config = { time: '', questions: '', mode: 'fixed', table: '', rangeFrom: '', rangeTo: '' };
+        let gameState = { currentQ: 1, score: 0, wrong: 0, history: [], startTime: null, totalTime: 0 };
+        let currentQData = { a: 0, b: 0, ans: 0 };
+        let userAnswer = '';
+        let timeLeft = 0;
+        let qStartTime = 0;
+        let lastPauseTime = 0;
+        let timerInterval = null;
+        let audioCtx = null;
+
+        // --- Core Functions ---
+        function playSound(type) {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                if (type === 'correct') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+                } else {
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+                }
+            } catch (e) {}
+        }
+
+        function updateUI() {
+            const root = document.getElementById('app-root');
+            document.body.className = `transition-colors duration-300 ${darkMode ? 'bg-[#0b111a]' : 'bg-[#eef2f6]'}`;
+            if (screen === 'setup') root.innerHTML = renderSetup();
+            else if (screen === 'game') root.innerHTML = renderGame();
+            else if (screen === 'result') root.innerHTML = renderResult();
+
+            if (screen === 'game' && !isPaused && !isShaking) {
+                const inp = document.getElementById('game-input');
+                if (inp) inp.focus();
+            }
+        }
+
+        function startSession() {
+            if (!config.time || !config.questions) return;
+            gameState = { currentQ: 1, score: 0, wrong: 0, history: [], startTime: Date.now(), totalTime: 0 };
+            screen = 'game';
+            generateQuestion();
+        }
+
+        function generateQuestion() {
+            let a, b;
+            if (config.mode === 'fixed') a = parseInt(config.table) || 1;
+            else {
+                const min = Math.min(parseInt(config.rangeFrom) || 1, parseInt(config.rangeTo) || 10);
+                const max = Math.max(parseInt(config.rangeFrom) || 1, parseInt(config.rangeTo) || 10);
+                a = Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+            b = Math.floor(Math.random() * 10) + 1;
+            currentQData = { a, b, ans: a * b };
+            timeLeft = parseFloat(config.time) || 5;
+            qStartTime = Date.now();
+            userAnswer = '';
+            isPaused = false;
+            isShaking = false;
+            startTimer();
+            updateUI();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (isPaused || isShaking) return;
+                timeLeft -= 0.1;
+                if (timeLeft <= 0) {
+                    timeLeft = 0;
+                    clearInterval(timerInterval);
+                    handleNext(false, true);
+                }
+                const text = document.getElementById('timer-text');
+                const circle = document.getElementById('timer-circle');
+                if (text) text.innerText = timeLeft.toFixed(1);
+                if (circle) {
+                    const limit = parseFloat(config.time) || 5;
+                    circle.setAttribute('stroke-dashoffset', 150.8 - (timeLeft / limit) * 150.8);
+                }
+            }, 100);
+        }
+
+        function handleNext(isCorrect, timedOut = false) {
+            if (isCorrect) {
+                playSound('correct');
+                proceed(isCorrect, timedOut);
+            } else {
+                playSound('wrong');
+                isShaking = true;
+                updateUI();
+                setTimeout(() => proceed(isCorrect, timedOut), 400);
+            }
+        }
+
+        function proceed(isCorrect, timedOut) {
+            const maxAllowed = parseFloat(config.time) || 5;
+            let timeTaken = Math.min((Date.now() - qStartTime) / 1000, maxAllowed).toFixed(1);
+            gameState.history.push({
+                q: `${currentQData.a} × ${currentQData.b}`,
+                correct: isCorrect,
+                time: timeTaken + 's',
+                userAns: timedOut ? 'time' : (userAnswer || '0'),
+                correctAns: currentQData.ans
+            });
+            if (isCorrect) gameState.score++;
+            else gameState.wrong++;
+            if (gameState.currentQ >= (parseInt(config.questions) || 5)) {
+                gameState.totalTime = gameState.history.reduce((acc, curr) => acc + parseFloat(curr.time), 0).toFixed(1);
+                screen = 'result';
+                clearInterval(timerInterval);
+                updateUI();
+            } else {
+                gameState.currentQ++;
+                generateQuestion();
+            }
+        }
+
+        // --- Views ---
+        function renderSetup() {
+            const btnFix = config.mode === 'fixed' ? (darkMode ? 'bg-slate-800 text-indigo-400 shadow-xl' : 'bg-white text-indigo-600 shadow-md') : 'opacity-40';
+            const btnShuf = config.mode === 'shuffle' ? (darkMode ? 'bg-slate-800 text-indigo-400 shadow-xl' : 'bg-white text-indigo-600 shadow-md') : 'opacity-40';
+            return `
+            <div class="flex flex-col items-center w-full max-w-sm mx-auto p-6 rounded-[3rem] shadow-2xl transition-colors duration-300 ${darkMode ? 'bg-[#1a2333] text-white' : 'bg-white text-slate-800'}">
+                <div class="w-full flex justify-start mb-4 opacity-70 cursor-pointer">${icons.chevronLeft}</div>
+                <div class="flex items-center justify-center w-full mb-8"><h1 class="text-[1.7rem] font-extrabold tracking-tight whitespace-nowrap ${darkMode ? 'text-white' : 'text-slate-900'}">Table Trainer <span class="text-[#5b5cf2]">Pro</span></h1></div>
+                <button onclick="darkMode=!darkMode; updateUI()" class="flex items-center gap-2 px-6 py-2 rounded-full mb-8 font-bold transition-all ${darkMode ? 'bg-white text-black shadow-lg' : 'bg-slate-100 text-slate-600 border'}">${darkMode ? icons.sun + ' Light Mode' : icons.moon + ' Dark Mode'}</button>
+                <div class="w-full space-y-6">
+                    <div><label class="text-[10px] font-bold opacity-60 uppercase tracking-widest ml-1">Time per question (sec)</label>
+                    <input type="number" value="${config.time}" oninput="config.time=this.value" placeholder="Enter Time" class="w-full mt-1 p-4 rounded-2xl border-2 text-center font-bold focus:outline-none focus:border-indigo-500 ${darkMode ? 'bg-transparent border-slate-700' : 'bg-slate-50 border-slate-200'}"></div>
+                    <div><label class="text-[10px] font-bold opacity-60 uppercase tracking-widest ml-1">Number of question</label>
+                    <input type="number" value="${config.questions}" oninput="config.questions=this.value" placeholder="Enter" class="w-full mt-1 p-4 rounded-2xl border-2 text-center font-bold focus:outline-none focus:border-indigo-500 ${darkMode ? 'bg-transparent border-slate-700' : 'bg-slate-50 border-slate-200'}"></div>
+                    <div class="flex p-1 rounded-2xl ${darkMode ? 'bg-[#0f172a]' : 'bg-slate-100'}">
+                        <button onclick="config.mode='fixed'; updateUI()" class="flex-1 py-3 rounded-xl font-bold transition-all ${btnFix}">Fixed</button>
+                        <button onclick="config.mode='shuffle'; updateUI()" class="flex-1 py-3 rounded-xl font-bold transition-all ${btnShuf}">Shuffle</button>
+                    </div>
+                    ${config.mode === 'fixed' ? `<input type="number" value="${config.table}" oninput="config.table=this.value" placeholder="Enter Table" class="w-full p-4 rounded-2xl border-2 text-center font-bold focus:outline-none focus:border-indigo-500 ${darkMode ? 'bg-transparent border-slate-700' : 'bg-slate-50 border-slate-200'}">` : `<div class="flex gap-4"><input type="number" value="${config.rangeFrom}" oninput="config.rangeFrom=this.value" placeholder="From" class="w-1/2 p-4 rounded-2xl border-2 text-center font-bold focus:outline-none focus:border-indigo-500 ${darkMode ? 'bg-transparent border-slate-700' : 'bg-slate-50 border-slate-200'}"><input type="number" value="${config.rangeTo}" oninput="config.rangeTo=this.value" placeholder="To" class="w-1/2 p-4 rounded-2xl border-2 text-center font-bold focus:outline-none focus:border-indigo-500 ${darkMode ? 'bg-transparent border-slate-700' : 'bg-slate-50 border-slate-200'}"></div>`}
+                    <button onclick="startSession()" class="w-full bg-[#5b5cf2] text-white font-black py-5 rounded-[2rem] text-xl shadow-lg active:scale-95 transition-transform">START</button>
+                    <p class="text-center font-bold text-xs opacity-50 tracking-tighter ${darkMode ? 'text-white' : 'text-slate-800'}">~ 🅱🆈 🅸🅽🅵🅸🅽🅸🆃🅴</p>
+                </div>
+            </div>`;
+        }
+
+        function renderGame() {
+            const total = parseInt(config.questions) || 5;
+            return `
+            <div class="relative flex flex-col items-center w-full max-w-sm mx-auto p-8 rounded-[3rem] shadow-2xl transition-all duration-300 min-h-[500px] overflow-hidden ${isShaking ? 'animate-shake-horizontal border-2 border-rose-500/50' : 'border-transparent'} ${darkMode ? 'bg-[#0f172a] text-white' : 'bg-[#f8faff] text-slate-800'}">
+                ${isPaused ? `<div class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-md transition-all duration-300"><div onclick="isPaused=false; updateUI(); startTimer()" class="p-6 bg-[#1a2333] rounded-full shadow-2xl mb-4 border border-slate-700 cursor-pointer active:scale-90 transition-transform">${icons.play}</div><h2 class="text-2xl font-black tracking-tight text-white uppercase">Game Paused</h2></div>` : ''}
+                <div class="w-full h-full flex flex-col items-center transition-all duration-300 ${isPaused ? 'blur-sm grayscale-[0.5]' : ''}">
+                    <div class="w-full flex justify-between items-center mb-10"><div onclick="screen='setup'; clearInterval(timerInterval); updateUI()" class="opacity-50 cursor-pointer">${icons.chevronLeft}</div><div class="flex-1 bg-indigo-500/20 h-1.5 mx-4 rounded-full overflow-hidden"><div class="h-full bg-indigo-500 transition-all duration-300" style="width: ${(gameState.currentQ/total)*100}%"></div></div><div onclick="lastPauseTime=Date.now(); isPaused=true; updateUI(); clearInterval(timerInterval)" class="p-2 rounded-full cursor-pointer">${icons.pause}</div></div>
+                    <div class="w-full flex justify-between items-start mb-12"><div class="text-left"><span class="text-[10px] font-black opacity-50 tracking-widest block uppercase">Question ${gameState.currentQ}/${total}</span></div><div class="relative flex items-center justify-center"><svg class="w-16 h-16 transform -rotate-90"><circle cx="32" cy="32" r="24" stroke="currentColor" stroke-width="4" fill="transparent" class="opacity-10" /><circle id="timer-circle" cx="32" cy="32" r="24" stroke="#ff4d4d" stroke-width="4" fill="transparent" stroke-dasharray="150.8" stroke-dashoffset="${150.8 - (timeLeft/(parseFloat(config.time)||5)) * 150.8}" stroke-linecap="round" /></svg><span id="timer-text" class="absolute text-sm font-bold tabular-nums">${timeLeft.toFixed(1)}</span></div></div>
+                    <div class="flex flex-col items-center justify-center flex-1 w-full"><h2 class="text-7xl font-black mb-12 tracking-tighter">${currentQData.a} × ${currentQData.b}</h2><div class="relative w-full max-w-[150px] mb-8"><input id="game-input" type="number" inputmode="numeric" value="${userAnswer}" oninput="userAnswer=this.value" onkeydown="if(event.key==='Enter' && !isPaused && !isShaking) handleNext(parseInt(userAnswer)===currentQData.ans)" placeholder="?" class="w-full bg-transparent text-center text-6xl font-black focus:outline-none"> <div class="w-full h-1 bg-indigo-500 mt-2"></div></div><span class="text-[10px] font-black opacity-40 uppercase tracking-widest">Press Enter to Submit</span></div>
+                </div>
+            </div>`;
+        }
+
+        function renderResult() {
+            const total = parseInt(config.questions) || 5;
+            const accuracy = Math.round((gameState.score / total) * 100);
+            const avgQ = (gameState.totalTime / total).toFixed(1);
+            return `
+            <div class="flex flex-col items-center w-full max-w-sm mx-auto p-6 rounded-[3rem] shadow-2xl transition-colors duration-300 ${darkMode ? 'bg-[#0f172a]' : 'bg-white'}">
+                <div class="w-full flex justify-between items-center mb-6"><div onclick="screen='setup'; updateUI()" class="p-2 bg-[#5b5cf2] rounded-full text-white cursor-pointer">${icons.x}</div><h3 class="font-bold text-sm ${darkMode ? 'text-white' : 'text-slate-500'}">Table Trainer</h3><div onclick="darkMode=!darkMode; updateUI()" class="p-2 rounded-full cursor-pointer ${darkMode ? 'bg-[#1e293b] text-yellow-400' : 'bg-slate-100 text-slate-400'}">${darkMode ? icons.sun : icons.moon}</div></div>
+                <div class="text-center mb-8"><div class="text-5xl mb-3">🏆</div><h2 class="text-4xl font-black tracking-tight ${darkMode ? 'text-white' : 'text-slate-800'}">Excellent!</h2><p class="text-slate-400 font-bold text-sm">Session complete</p></div>
+                <div class="grid grid-cols-2 gap-4 w-full mb-8">
+                    <div class="${darkMode ? 'bg-[#1e293b]' : 'bg-[#eef2ff]'} p-5 rounded-[1.8rem] text-center"><span class="text-3xl font-black text-[#818cf8]">${accuracy}%</span><span class="text-[11px] font-bold opacity-50 uppercase tracking-widest mt-1 block ${darkMode ? 'text-slate-400' : 'text-slate-500'}">Accuracy</span></div>
+                    <div class="${darkMode ? 'bg-[#1e293b]' : 'bg-[#eff6ff]'} p-5 rounded-[1.8rem] text-center"><span class="text-3xl font-black text-[#60a5fa]">${gameState.score}/${total}</span><span class="text-[11px] font-bold opacity-50 uppercase tracking-widest mt-1 block ${darkMode ? 'text-slate-400' : 'text-slate-500'}">Score</span></div>
+                    <div class="${darkMode ? 'bg-[#1e293b]' : 'bg-[#ecfdf5]'} p-5 rounded-[1.8rem] text-center"><span class="text-3xl font-black text-[#10b981]">${gameState.score}</span><span class="text-[11px] font-bold opacity-50 uppercase tracking-widest mt-1 block ${darkMode ? 'text-slate-400' : 'text-slate-500'}">Correct</span></div>
+                    <div class="${darkMode ? 'bg-[#1e293b]' : 'bg-[#fef2f2]'} p-5 rounded-[1.8rem] text-center"><span class="text-3xl font-black text-[#ef4444]">${gameState.wrong}</span><span class="text-[11px] font-bold opacity-50 uppercase tracking-widest mt-1 block ${darkMode ? 'text-slate-400' : 'text-slate-500'}">Wrong</span></div>
+                    <div class="${darkMode ? 'bg-[#1e293b]' : 'bg-[#f5f3ff]'} p-5 rounded-[1.8rem] text-center"><span class="text-3xl font-black text-[#a78bfa]">${gameState.totalTime}s</span><span class="text-[11px] font-bold opacity-50 uppercase tracking-widest mt-1 block ${darkMode ? 'text-slate-400' : 'text-slate-500'}">Total Time</span></div>
+                    <div class="${darkMode ? 'bg-[#1e293b]' : 'bg-[#fdf2f7]'} p-5 rounded-[1.8rem] text-center"><span class="text-3xl font-black text-[#f472b6]">${avgQ}s</span><span class="text-[11px] font-bold opacity-50 uppercase tracking-widest mt-1 block ${darkMode ? 'text-slate-400' : 'text-slate-500'}">Avg / Q</span></div>
+                </div>
+                <div class="w-full max-h-[220px] overflow-y-auto mb-8 pr-1 space-y-2 custom-scrollbar">
+                    ${gameState.history.map(item => `
+                        <div class="flex items-center justify-between p-4 rounded-[1.2rem] border-2 transition-all ${item.correct ? (darkMode ? 'bg-emerald-900/10 border-emerald-500/20' : 'bg-emerald-50 border-emerald-100') : (darkMode ? 'bg-rose-900/10 border-rose-500/20' : 'bg-rose-50 border-rose-100')}">
+                            <div class="flex items-center gap-3"><div class="${item.correct ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'} p-1.5 rounded-lg flex items-center justify-center">${item.correct ? icons.check : icons.smallX || '✗'}</div><span class="font-black text-lg ${darkMode ? 'text-white' : 'text-slate-800'}">${item.q}</span></div>
+                            <div class="flex items-center gap-4">${!item.correct ? `<span class="text-xs font-bold flex items-center gap-1.5"><span class="text-rose-400">${item.userAns === 'time' ? 'time · ' + config.time : item.userAns}</span><span class="text-slate-500 opacity-40">→</span><span class="text-emerald-500">${item.correctAns}</span></span>` : ''}<span class="text-xs font-bold ${darkMode ? 'text-slate-500' : 'text-slate-400'}">${item.time}</span></div>
+                        </div>`).join('')}
+                </div>
+                <div class="flex gap-4 w-full">
+                    <button onclick="startSession()" class="flex-1 flex items-center justify-center gap-2 py-5 rounded-2xl font-black transition-all active:scale-95 ${darkMode ? 'bg-[#1e293b] text-white border border-slate-800' : 'bg-slate-100 text-slate-600'}">${icons.retry} Retry</button>
+                    <button onclick="screen='setup'; updateUI()" class="flex-1 bg-[#5b5cf2] text-white py-5 rounded-2xl font-black shadow-lg shadow-indigo-500/20 active:scale-95 transition-all">New Session</button>
+                </div>
+            </div>`;
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
+
+
+
