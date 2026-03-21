@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0b111a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Table Trainer Pro</title>
+    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIlRhYmxlIFRyYWluZXIgUHJvIiwKICAic2hvcnRfbmFtZSI6ICJUYWJsZSBUcmFpbmVyIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwYjExMWEiLAogICJ0aGVtZV9jb3VudCI6ICIjMGIxMTFhIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly9jZG4taWNvbnMtcG5nLmZsaXRpY29uLmNvbS81MTIvNDQ3MS80NDcxMzY0LnBuZyIsCiAgICAgICJzaXplcyI6ICI1MTJ4NTEyIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIgogICAgfQogIF0KfQ==">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html, body {
+            margin: 0; padding: 0;
+            /* Lock to viewport — no address-bar scroll, no bounce */
+            width: 100%; height: 100%;
+            overflow: hidden;
+            overscroll-behavior: none;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none; -webkit-user-select: none;
+            background: #0b111a;
+        }
+
+        /*
+         * APP SHELL
+         * #shell = fixed full-screen container
+         *   ├─ #bg   = background color layer (no scroll)
+         *   └─ #scroll = the ONE element that scrolls (overflow-y: auto)
+         *        └─ .card-wrap = max-width card holder
+         */
+        #shell {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        #scroll {
+            flex: 1;
+            overflow-x: hidden;
+            overflow-y: auto;
+            overscroll-behavior: contain;   /* no pull-to-refresh */
+            -webkit-overflow-scrolling: touch;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* respect notch / home-bar */
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 16px);
+            padding-left: env(safe-area-inset-left, 0px);
+            padding-right: env(safe-area-inset-right, 0px);
+        }
+        .card-wrap {
+            width: 100%;
+            max-width: 24rem;
+            padding: 1rem;
+            flex-shrink: 0;
+        }
+
+        /* Game card fills full visible height so it never floats */
+        .game-card {
+            min-height: calc(100vh - 2rem);
+            min-height: calc(100dvh - 2rem);
+        }
+
+        /* Spinner removal */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        @keyframes shake {
+            0%,100%{transform:translateX(0)}
+            10%,30%,50%,70%{transform:translateX(-8px)}
+            20%,40%,60%,80%{transform:translateX(8px)}
+        }
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+
+        @keyframes fadeUp {
+            from{opacity:0;transform:translateY(16px)}
+            to{opacity:1;transform:translateY(0)}
+        }
+        .fade-up { animation: fadeUp 0.25s ease both; }
+
+        .paused-blur { filter: blur(4px) grayscale(.5); pointer-events: none; }
+
+        .custom-scrollbar::-webkit-scrollbar{width:4px}
+        .custom-scrollbar::-webkit-scrollbar-thumb{background:#5b5cf2;border-radius:10px}
+        .custom-scrollbar::-webkit-scrollbar-track{background:transparent}
+    </style>
+</head>
+<body>
+<div id="shell">
+  <div id="scroll"></div>
+</div>
+
+<script>
+// ── SERVICE WORKER ─────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+    const sw = `const C='tt-v2';
+self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(['./']))));
+self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+    navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'})));
+}
+
+// ── ICONS ──────────────────────────────────────────────────────────────────
+const I = {
+    sun:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-14.07 1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2m-4.34 5.66 1.41 1.41M4.93 4.93l1.41 1.41"/></svg>`,
+    moon:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`,
+    back:`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>`,
+    pause:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`,
+    play:`<svg width="48" height="48" viewBox="0 0 24 24" fill="#5b5cf2" stroke="#5b5cf2" stroke-width="2"><path d="m5 3 14 9-14 9V3z"/></svg>`,
+    close:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12"/></svg>`,
+    check:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><path d="M20 6 9 17l-5-5"/></svg>`,
+    retry:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`,
+    x:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12"/></svg>`
+};
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+let dark = true;
+let screen = 'setup';
+let paused = false, shaking = false;
+let cfg  = { time:'', questions:'', mode:'fixed', table:'', from:'', to:'' };
+let gs   = { q:1, score:0, wrong:0, history:[], totalTime:0 };
+let qd   = { a:0, b:0, ans:0 };
+let ans  = '';
+let timeLeft = 0, qStart = 0;
+let timer = null;
+let audioCtx = null;
+
+// ── AUDIO ──────────────────────────────────────────────────────────────────
+function beep(ok) {
+    try {
+        if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+        if (audioCtx.state==='suspended') audioCtx.resume();
+        const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        if (ok) {
+            o.type='sine';
+            o.frequency.setValueAtTime(600,audioCtx.currentTime);
+            o.frequency.exponentialRampToValueAtTime(900,audioCtx.currentTime+0.1);
+            g.gain.setValueAtTime(0.2,audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.15);
+            o.start(); o.stop(audioCtx.currentTime+0.15);
+        } else {
+            o.type='triangle';
+            o.frequency.setValueAtTime(150,audioCtx.currentTime);
+            o.frequency.linearRampToValueAtTime(50,audioCtx.currentTime+0.2);
+            g.gain.setValueAtTime(0.3,audioCtx.currentTime);
+            g.gain.linearRampToValueAtTime(0.01,audioCtx.currentTime+0.25);
+            o.start(); o.stop(audioCtx.currentTime+0.25);
+        }
+    } catch(e) {}
+}
+
+// ── PAINT ──────────────────────────────────────────────────────────────────
+function paint() {
+    const bg = dark ? '#0b111a' : '#eef2f6';
+    document.body.style.background = bg;
+    const shell = document.getElementById('shell');
+    shell.style.background = bg;
+    const scroll = document.getElementById('scroll');
+    scroll.style.background = bg;
+
+    if (screen==='setup')  scroll.innerHTML = setupHTML();
+    if (screen==='game')   scroll.innerHTML = gameHTML();
+    if (screen==='result') scroll.innerHTML = resultHTML();
+
+    // always scroll to top on screen change
+    scroll.scrollTop = 0;
+
+    if (screen==='game' && !paused && !shaking) {
+        requestAnimationFrame(() => { const el=document.getElementById('gi'); if(el) el.focus(); });
+    }
+}
+
+// ── SETUP ──────────────────────────────────────────────────────────────────
+function setupHTML() {
+    const dm = dark;
+    const bF = cfg.mode==='fixed'
+        ? (dm?'bg-slate-800 text-indigo-400 shadow-xl':'bg-white text-indigo-600 shadow-md')
+        : 'opacity-40';
+    const bS = cfg.mode==='shuffle'
+        ? (dm?'bg-slate-800 text-indigo-400 shadow-xl':'bg-white text-indigo-600 shadow-md')
+        : 'opacity-40';
+    const inp = `w-full mt-1 p-4 rounded-2xl border-2 text-center font-bold focus:outline-none focus:border-indigo-500 ${dm?'bg-transparent border-slate-700 text-white placeholder-slate-500':'bg-slate-50 border-slate-200 text-slate-800'}`;
+    return `
+    <div class="card-wrap fade-up">
+      <div class="flex flex-col items-center w-full p-6 rounded-[3rem] shadow-2xl ${dm?'bg-[#1a2333] text-white':'bg-white text-slate-800'}">
+        <div class="w-full flex justify-start mb-4 opacity-70">${I.back}</div>
+        <div class="flex items-center justify-center w-full mb-6">
+          <h1 class="text-[1.7rem] font-extrabold tracking-tight ${dm?'text-white':'text-slate-900'}">
+            Table Trainer <span class="text-[#5b5cf2]">Pro</span>
+          </h1>
+        </div>
+        <button onclick="dark=!dark;paint()" class="flex items-center gap-2 px-6 py-2 rounded-full mb-6 font-bold ${dm?'bg-white text-black shadow-lg':'bg-slate-100 text-slate-600 border'}">
+          ${dm ? I.sun+' Light Mode' : I.moon+' Dark Mode'}
+        </button>
+        <div class="w-full space-y-5">
+          <div>
+            <label class="text-[10px] font-bold opacity-60 uppercase tracking-widest ml-1">Time per question (sec)</label>
+            <input type="number" inputmode="decimal" value="${cfg.time}" oninput="cfg.time=this.value" placeholder="e.g. 5" class="${inp}">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold opacity-60 uppercase tracking-widest ml-1">Number of questions</label>
+            <input type="number" inputmode="numeric" value="${cfg.questions}" oninput="cfg.questions=this.value" placeholder="e.g. 10" class="${inp}">
+          </div>
+          <div class="flex p-1 rounded-2xl ${dm?'bg-[#0f172a]':'bg-slate-100'}">
+            <button onclick="cfg.mode='fixed';paint()" class="flex-1 py-3 rounded-xl font-bold transition-all ${bF}">Fixed</button>
+            <button onclick="cfg.mode='shuffle';paint()" class="flex-1 py-3 rounded-xl font-bold transition-all ${bS}">Shuffle</button>
+          </div>
+          ${cfg.mode==='fixed'
+            ? `<input type="number" inputmode="numeric" value="${cfg.table}" oninput="cfg.table=this.value" placeholder="Enter Table (e.g. 7)" class="${inp}">`
+            : `<div class="flex gap-4">
+                <input type="number" inputmode="numeric" value="${cfg.from}" oninput="cfg.from=this.value" placeholder="From" class="w-1/2 mt-1 p-4 rounded-2xl border-2 text-center font-bold focus:outline-none focus:border-indigo-500 ${dm?'bg-transparent border-slate-700 text-white placeholder-slate-500':'bg-slate-50 border-slate-200 text-slate-800'}">
+                <input type="number" inputmode="numeric" value="${cfg.to}"   oninput="cfg.to=this.value"   placeholder="To"   class="w-1/2 mt-1 p-4 rounded-2xl border-2 text-center font-bold focus:outline-none focus:border-indigo-500 ${dm?'bg-transparent border-slate-700 text-white placeholder-slate-500':'bg-slate-50 border-slate-200 text-slate-800'}">
+               </div>`}
+          <button onclick="startGame()" class="w-full bg-[#5b5cf2] text-white font-black py-5 rounded-[2rem] text-xl shadow-lg active:scale-95 transition-transform">
+            START
+          </button>
+          <p class="text-center font-bold text-xs opacity-50 tracking-tighter ${dm?'text-white':'text-slate-800'}">~ 🅱🆈 🅸🅽🅵🅸🅽🅸🆃🅴</p>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── GAME ───────────────────────────────────────────────────────────────────
+function gameHTML() {
+    const dm  = dark;
+    const tot = parseInt(cfg.questions)||5;
+    const lim = parseFloat(cfg.time)||5;
+    const off = Math.max(0, Math.min(150.8, 150.8-(timeLeft/lim)*150.8));
+    return `
+    <div class="card-wrap fade-up">
+      <div class="game-card relative flex flex-col items-center w-full p-8 rounded-[3rem] shadow-2xl
+        ${shaking?'shake border-2 border-rose-500/50':'border-2 border-transparent'}
+        ${dm?'bg-[#0f172a] text-white':'bg-[#f8faff] text-slate-800'}">
+
+        ${paused?`
+        <div class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-md rounded-[3rem]">
+          <div onclick="doUnpause()" class="p-6 bg-[#1a2333] rounded-full shadow-2xl mb-4 border border-slate-700 cursor-pointer active:scale-90 transition-transform">
+            ${I.play}
+          </div>
+          <h2 class="text-2xl font-black tracking-tight text-white uppercase">Game Paused</h2>
+        </div>`:''}
+
+        <div class="w-full h-full flex flex-col items-center ${paused?'paused-blur':''}">
+          <div class="w-full flex justify-between items-center mb-10">
+            <div onclick="exitGame()" class="opacity-50 cursor-pointer active:opacity-100">${I.back}</div>
+            <div class="flex-1 bg-indigo-500/20 h-1.5 mx-4 rounded-full overflow-hidden">
+              <div class="h-full bg-indigo-500 transition-all duration-300" style="width:${(gs.q/tot)*100}%"></div>
+            </div>
+            <div onclick="doPause()" class="p-2 rounded-full cursor-pointer active:opacity-60">${I.pause}</div>
+          </div>
+          <div class="w-full flex justify-between items-start mb-12">
+            <span class="text-[10px] font-black opacity-50 tracking-widest uppercase">Question ${gs.q}/${tot}</span>
+            <div class="relative flex items-center justify-center">
+              <svg class="w-16 h-16 -rotate-90">
+                <circle cx="32" cy="32" r="24" stroke="currentColor" stroke-width="4" fill="transparent" class="opacity-10"/>
+                <circle id="tc" cx="32" cy="32" r="24" stroke="#ff4d4d" stroke-width="4" fill="transparent"
+                  stroke-dasharray="150.8" stroke-dashoffset="${off}" stroke-linecap="round"/>
+              </svg>
+              <span id="tt" class="absolute text-sm font-bold tabular-nums">${timeLeft.toFixed(1)}</span>
+            </div>
+          </div>
+          <div class="flex flex-col items-center justify-center flex-1 w-full">
+            <h2 class="text-7xl font-black mb-12 tracking-tighter">${qd.a} × ${qd.b}</h2>
+            <div class="relative w-full max-w-[150px] mb-8">
+              <input id="gi" type="number" inputmode="numeric" value="${ans}"
+                oninput="ans=this.value"
+                onkeydown="if(event.key==='Enter'&&!paused&&!shaking&&ans!=='') doSubmit(parseInt(ans)===qd.ans)"
+                placeholder="?"
+                class="w-full bg-transparent text-center text-6xl font-black focus:outline-none ${dm?'text-white':'text-slate-800'}">
+              <div class="w-full h-1 bg-indigo-500 mt-2"></div>
+            </div>
+            <span class="text-[10px] font-black opacity-40 uppercase tracking-widest">Press Enter to Submit</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── RESULT ─────────────────────────────────────────────────────────────────
+function resultHTML() {
+    const dm  = dark;
+    const tot = parseInt(cfg.questions)||5;
+    const acc = Math.round((gs.score/tot)*100);
+    const avg = tot>0 ? (parseFloat(gs.totalTime)/tot).toFixed(1) : '0.0';
+    const sc  = (color,val,label,lb,db) =>
+        `<div class="p-5 rounded-[1.8rem] text-center" style="background:${dm?db:lb}">
+           <span class="text-3xl font-black" style="color:${color}">${val}</span>
+           <span class="text-[11px] font-bold opacity-50 uppercase tracking-widest mt-1 block ${dm?'text-slate-400':'text-slate-500'}">${label}</span>
+         </div>`;
+    return `
+    <div class="card-wrap fade-up">
+      <div class="flex flex-col items-center w-full p-6 rounded-[3rem] shadow-2xl ${dm?'bg-[#0f172a]':'bg-white'}">
+        <div class="w-full flex justify-between items-center mb-6">
+          <div onclick="screen='setup';paint()" class="p-2 bg-[#5b5cf2] rounded-full text-white cursor-pointer active:scale-90 transition-transform">${I.close}</div>
+          <h3 class="font-bold text-sm ${dm?'text-white':'text-slate-500'}">Table Trainer</h3>
+          <div onclick="dark=!dark;paint()" class="p-2 rounded-full cursor-pointer ${dm?'bg-[#1e293b] text-yellow-400':'bg-slate-100 text-slate-400'}">${dm?I.sun:I.moon}</div>
+        </div>
+        <div class="text-center mb-8">
+          <div class="text-5xl mb-3">🏆</div>
+          <h2 class="text-4xl font-black tracking-tight ${dm?'text-white':'text-slate-800'}">Excellent!</h2>
+          <p class="text-slate-400 font-bold text-sm">Session complete</p>
+        </div>
+        <div class="grid grid-cols-2 gap-4 w-full mb-8">
+          ${sc('#818cf8',acc+'%','Accuracy','#eef2ff','#1e293b')}
+          ${sc('#60a5fa',gs.score+'/'+tot,'Score','#eff6ff','#1e293b')}
+          ${sc('#10b981',gs.score,'Correct','#ecfdf5','#1e293b')}
+          ${sc('#ef4444',gs.wrong,'Wrong','#fef2f2','#1e293b')}
+          ${sc('#a78bfa',gs.totalTime+'s','Total Time','#f5f3ff','#1e293b')}
+          ${sc('#f472b6',avg+'s','Avg / Q','#fdf2f7','#1e293b')}
+        </div>
+        <!-- history: no inner scroll — page scrolls naturally -->
+        <div class="w-full mb-8 space-y-2">
+          ${gs.history.map(h=>`
+          <div class="flex items-center justify-between p-4 rounded-[1.2rem] border-2
+            ${h.ok?(dm?'bg-emerald-900/10 border-emerald-500/20':'bg-emerald-50 border-emerald-100')
+                  :(dm?'bg-rose-900/10 border-rose-500/20':'bg-rose-50 border-rose-100')}">
+            <div class="flex items-center gap-3">
+              <div class="${h.ok?'bg-emerald-500/10 text-emerald-500':'bg-rose-500/10 text-rose-500'} p-1.5 rounded-lg">${h.ok?I.check:I.x}</div>
+              <span class="font-black text-lg ${dm?'text-white':'text-slate-800'}">${h.q}</span>
+            </div>
+            <div class="flex items-center gap-3">
+              ${!h.ok?`<span class="text-xs font-bold flex items-center gap-1">
+                <span class="text-rose-400">${h.ua==='time'?'time·'+cfg.time:h.ua}</span>
+                <span class="opacity-30">→</span>
+                <span class="text-emerald-500">${h.ca}</span>
+              </span>`:''}
+              <span class="text-xs font-bold ${dm?'text-slate-500':'text-slate-400'}">${h.t}</span>
+            </div>
+          </div>`).join('')}
+        </div>
+        <div class="flex gap-4 w-full">
+          <button onclick="startGame(true)" class="flex-1 flex items-center justify-center gap-2 py-5 rounded-2xl font-black active:scale-95 transition-all ${dm?'bg-[#1e293b] text-white border border-slate-800':'bg-slate-100 text-slate-600'}">
+            ${I.retry} Retry
+          </button>
+          <button onclick="screen='setup';paint()" class="flex-1 bg-[#5b5cf2] text-white py-5 rounded-2xl font-black shadow-lg shadow-indigo-500/20 active:scale-95 transition-all">
+            New Session
+          </button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── GAME LOGIC ─────────────────────────────────────────────────────────────
+function startGame(retry=false) {
+    if (!retry) {
+        if (!cfg.time || !cfg.questions) return;
+        if (cfg.mode==='fixed'   && !cfg.table) return;
+        if (cfg.mode==='shuffle' && (!cfg.from||!cfg.to)) return;
+    }
+    gs = { q:1, score:0, wrong:0, history:[], totalTime:0 };
+    screen = 'game';
+    nextQ();
+}
+
+function nextQ() {
+    let a;
+    if (cfg.mode==='fixed') {
+        a = parseInt(cfg.table)||1;
+    } else {
+        const mn=Math.min(parseInt(cfg.from)||1, parseInt(cfg.to)||10);
+        const mx=Math.max(parseInt(cfg.from)||1, parseInt(cfg.to)||10);
+        a = Math.floor(Math.random()*(mx-mn+1))+mn;
+    }
+    const b = Math.floor(Math.random()*10)+1;
+    qd = { a, b, ans: a*b };
+    timeLeft = parseFloat(cfg.time)||5;
+    qStart   = Date.now();
+    ans      = '';
+    paused   = false;
+    shaking  = false;
+    startTimer();
+    paint();
+}
+
+function startTimer() {
+    clearInterval(timer);
+    timer = setInterval(()=>{
+        if (paused || shaking) return;
+        timeLeft = Math.round((timeLeft-0.1)*10)/10;
+        if (timeLeft <= 0) {
+            timeLeft = 0;
+            clearInterval(timer);
+            doSubmit(false, true);
+            return;
+        }
+        const tt=document.getElementById('tt');
+        const tc=document.getElementById('tc');
+        if (tt) tt.innerText = timeLeft.toFixed(1);
+        if (tc) {
+            const lim = parseFloat(cfg.time)||5;
+            tc.setAttribute('stroke-dashoffset', Math.max(0,150.8-(timeLeft/lim)*150.8));
+        }
+    }, 100);
+}
+
+function doSubmit(ok, timedOut=false) {
+    if (shaking) return;
+    if (ok) { beep(true);  advance(true,  timedOut); }
+    else    { beep(false); shaking=true; paint(); setTimeout(()=>advance(false,timedOut),400); }
+}
+
+function advance(ok, timedOut) {
+    const lim = parseFloat(cfg.time)||5;
+    const t   = Math.min((Date.now()-qStart)/1000, lim).toFixed(1);
+    gs.history.push({ q:`${qd.a} × ${qd.b}`, ok, t:t+'s', ua:timedOut?'time':(ans||'?'), ca:qd.ans });
+    if (ok) gs.score++; else gs.wrong++;
+    const tot = parseInt(cfg.questions)||5;
+    if (gs.q >= tot) {
+        gs.totalTime = gs.history.reduce((s,h)=>s+parseFloat(h.t),0).toFixed(1);
+        screen = 'result';
+        clearInterval(timer);
+        paint();
+    } else {
+        gs.q++;
+        nextQ();
+    }
+}
+
+function doPause()   { paused=true;  clearInterval(timer); paint(); }
+function doUnpause() { paused=false; paint(); startTimer(); }
+function exitGame()  { screen='setup'; clearInterval(timer); paint(); }
+
+// ── BOOT ───────────────────────────────────────────────────────────────────
+paint();
+</script>
+</body>
+</html>
