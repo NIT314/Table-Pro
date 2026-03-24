@@ -92,6 +92,11 @@
         .custom-scrollbar::-webkit-scrollbar{width:4px}
         .custom-scrollbar::-webkit-scrollbar-thumb{background:#5b5cf2;border-radius:10px}
         .custom-scrollbar::-webkit-scrollbar-track{background:transparent}
+   @keyframes rotateGear {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+   }
+        
     </style>
 </head>
 <body>
@@ -126,6 +131,7 @@ let dark = false;
 let screen = 'setup';
 let paused = false, shaking = false;
 let cfg  = { time:'', questions:'', mode:'fixed', table:'', from:'', to:'' };
+let questionHistory = []; // Sawalon ko yaad rakhne ke liye 
 let gs   = { q:1, score:0, wrong:0, history:[], totalTime:0 };
 let qd   = { a:0, b:0, ans:0 };
 let ans  = '';
@@ -191,6 +197,14 @@ function setupHTML() {
     const inp = `w-full mt-1 p-4 rounded-2xl border-2 text-center font-bold focus:outline-none focus:border-indigo-500 ${dm?'bg-transparent border-slate-700 text-white placeholder-slate-500':'bg-slate-50 border-slate-200 text-slate-800'}`;
     return `
     <div class="card-wrap fade-up">
+    <div class="card-wrap fade-up">
+  <div class="flex flex-col items-center w-full p-6 rounded-[3rem] shadow-2xl ${dm?'bg-[#1a2333] text-white':'bg-white text-slate-800'} relative">
+    
+    <span id="mainSettingsBtn" onclick="openQuoteSettings()" class="absolute top-8 right-8 cursor-pointer opacity-50 hover:opacity-100" style="font-size: 20px; animation: rotateGear 4s linear infinite;">⚙️</span>
+
+    <div class="w-full flex justify-start mb-4 opacity-70">${I.back}</div>
+    
+    
       <div class="flex flex-col items-center w-full p-6 rounded-[3rem] shadow-2xl ${dm?'bg-[#1a2333] text-white':'bg-white text-slate-800'}">
         <div class="w-full flex justify-start mb-4 opacity-70">${I.back}</div>
         <div class="flex items-center justify-center w-full mb-6">
@@ -367,24 +381,43 @@ function startGame(retry=false) {
 }
 
 function nextQ() {
-    let a;
-    if (cfg.mode==='fixed') {
-        a = parseInt(cfg.table)||1;
-    } else {
-        const mn=Math.min(parseInt(cfg.from)||1, parseInt(cfg.to)||10);
-        const mx=Math.max(parseInt(cfg.from)||1, parseInt(cfg.to)||10);
-        a = Math.floor(Math.random()*(mx-mn+1))+mn;
+    let a, b, key;
+    let isNew = false;
+    let attempts = 0;
+
+    // Logic: Jab tak naya sawal na mile tab tak dhundo
+    while (!isNew && attempts < 50) {
+        if (cfg.mode === 'fixed') {
+            a = parseInt(cfg.table) || 1;
+        } else {
+            const mn = Math.min(parseInt(cfg.from) || 1, parseInt(cfg.to) || 10);
+            const mx = Math.max(parseInt(cfg.from) || 1, parseInt(cfg.to) || 10);
+            a = Math.floor(Math.random() * (mx - mn + 1)) + mn;
+        }
+        b = Math.floor(Math.random() * 10) + 1;
+        key = `${a}x${b}`;
+
+        // Agar ye sawal pichle 10 sawalo me nahi hai to select karo
+        if (!questionHistory.includes(key)) {
+            isNew = true;
+        }
+        attempts++;
     }
-    const b = Math.floor(Math.random()*10)+1;
-    qd = { a, b, ans: a*b };
-    timeLeft = parseFloat(cfg.time)||5;
-    qStart   = Date.now();
-    ans      = '';
-    paused   = false;
-    shaking  = false;
+
+    // History update karo
+    questionHistory.push(key);
+    if (questionHistory.length > 10) questionHistory.shift(); 
+
+    qd = { a, b, ans: a * b };
+    timeLeft = parseFloat(cfg.time) || 5;
+    qStart = Date.now();
+    ans = '';
+    paused = false;
+    shaking = false;
     startTimer();
     paint();
 }
+
 
 function startTimer() {
     clearInterval(timer);
@@ -436,6 +469,11 @@ function exitGame()  { screen='setup'; clearInterval(timer); paint(); }
 
 // ── BOOT ───────────────────────────────────────────────────────────────────
 paint();
+    function openQuoteSettings() {
+    // Ye hum next step mein jab Pop-up banayenge tab poora karenge
+    alert("Quote Settings coming in next step!");
+    }
+    
 </script>
 </body>
 </html>
