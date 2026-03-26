@@ -470,80 +470,128 @@ let qHistory = [];
 
 // 60 raw, hard-hitting quotes — pure grind, study, real success
 // No work-life balance. No generic advice. Every line should feel personal.
+// 60 powerful quotes with Hindi translations
 const FALLBACK_QUOTES = [
-    // ── GRIND & HARD WORK ──
-    'Sleep when you\'re dead. Right now, there is work to be done.',
-    'The people enjoying their life today suffered the work others refused to do yesterday.',
-    'Soft effort produces soft results. There is no other version of this equation.',
-    'Nobody who ever gave everything they had looked back and said it was too much.',
-    'The grind feels lonely until the results make it all make sense.',
-    'You are not tired. You are just not hungry enough yet.',
-    'Mediocrity is always comfortable. That is the trap.',
-    'The ones at the top did not find a shortcut. They just refused to stop.',
-    'Work so hard that rest feels earned and not just scheduled.',
-    'Average people rest on weekends. That is why they stay average.',
-
-    // ── STUDY & REAL LEARNING ──
-    'One hour of deep study beats five hours of pretending to study.',
-    'The exam does not care about your excuses. Neither does life.',
-    'You are not bad at studying. You are bad at sitting with discomfort.',
-    'Every concept you skip today will ambush you in the exam.',
-    'The student who asks the embarrassing question passes. The silent one fails.',
-    'Stop highlighting. Start solving. One is comfort, the other is learning.',
-    'Revision is not punishment. It is how the brain decides what to keep.',
-    'Your marks are not about intelligence. They are about the hours you actually put in.',
-    'The syllabus is not the enemy. Procrastination is.',
-    'Understanding beats memorising every single time in the long run.',
-
-    // ── SACRIFICE & DELAYED GRATIFICATION ──
-    'Everyone wants the result. Almost nobody wants to pay the price before seeing it.',
-    'The years you sacrifice in study are the decades you gain in freedom.',
-    'Your friends are having fun tonight. Your future self will have options. Choose.',
-    'Pleasure now is pain later. Pain now is freedom later. Simple as that.',
-    'The richest people you will ever meet were once the most boring to hang out with.',
-    'While everyone was watching, you should have been working.',
-    'Joy after earned success tastes completely different. Most people never find out.',
-    'Give up the good times now so you are not giving up options later.',
-    'Comfort today is borrowed from your future. The interest rate is brutal.',
-    'The party will happen every weekend for years. The window to build yourself will not.',
-
-    // ── MENTAL TOUGHNESS ──
-    'Your mind will quit a thousand times before your body does. Know that.',
-    'The moment it gets hard is the exact moment it starts to matter.',
-    'Weak days exist. Giving in to them is a choice, not an inevitability.',
-    'Feelings are not facts. Do the work regardless of how you feel.',
-    'Nobody is going to believe in you until you give them undeniable proof.',
-    'The mind that quits in practice will quit under pressure. Train it.',
-    'Pressure reveals character. It does not build it. Build it now.',
-    'Stop protecting your ego. Start accepting where you actually are.',
-    'The version of you that succeeds is ruthless about protecting focus and time.',
-    'Hard is not bad. Hard is the filter that removes the uncommitted.',
-
-    // ── REALITY & TRUTH ──
-    'The world is not interested in your story. Only your results.',
-    'Nobody is thinking about you as much as you think. Use that freedom.',
-    'Time spent complaining is time stolen from building.',
-    'Your background does not determine your outcome. Your daily choices do.',
-    'Intelligence without work is just potential. Potential without execution is nothing.',
-    'The right time you are waiting for does not exist. There is only now.',
-    'People do not fail because they lack talent. They fail because they stop.',
-    'Stop announcing your goals. The work will announce them for you.',
-    'Most regret in life comes not from trying and failing but from never trying.',
-    'The distance between your life now and the life you want is called work.',
-
-    // ── IDENTITY & BECOMING ──
-    'You do not rise to your goals. You fall to the level of your identity. Change who you are.',
-    'Act like the person you want to become before you feel like it.',
-    'One day you will meet the version of yourself you chose to build. Make it worth it.',
-    'Stop asking if you can do it. Start asking if you are willing to pay for it.',
-    'The person who built something great was not more gifted. They were more obsessed.',
-    'Character is what you do when the result is not guaranteed.',
-    'Decide once. Execute daily. Adjust never unless necessary.',
-    'You become serious the day you stop treating your ambition as a hobby.',
-    'Most people live their entire life as the rough draft. Rewrite yours.',
-    'The work you do in private becomes the life you live in public.'
+    'Choose the habit that best suits you, not the one that is most popular.\nWo aadat chuniye jo aapke liye sahi hai, wo nahi jo sabse popular hai.',
+    
+    'The ones at the top did not find a shortcut. They just refused to stop.\nJo log top par hain unhe koi shortcut nahi mila, unhone bas rukne se mana kar diya tha.',
+    
+    'Average people rest on weekends. That is why they stay average.\nSadharan log weekend par araam karte hain, isliye wo hamesha sadharan hi rehte hain.',
+    
+    'Mediocrity is always comfortable. That is the trap.\nSadharan bane rehna hamesha araamdayak hota hai, aur yahi asli jaal hai.',
+    
+    'You do not rise to the level of your goals. You fall to the level of your systems.\nAap apne goals ke level tak nahi pahunte. Aap apne systems ke level tak gir jaate hain.',
+    
+    'Every action you take is a vote for the type of person you wish to become.\nAapka har action ek vote hai us insaan ke liye jo aap banna chahte hain.',
+    
+    'Hard work beats talent when talent does not work hard.\nMehnat talent ko tab harati hai jab talent mehnat nahi karta.',
+    
+    'The biggest risk is not taking any risk.\nSabse bada risk koi risk na lena hai.',
+    
+    'Your time is limited. Do not waste it living someone else's life.\nAapka time limited hai, ise kisi aur ki zindagi jeene mein waste mat karo.',
+    
+    'The only way to do great work is to love what you do.\nMahaan kaam karne ka sirf ek hi tareeka hai - jo karte ho use pyaar karo.',
+    
+    'Do not be afraid to give up the good to go for the great.\nAcche ko chodkar great ke liye jaane se mat daro.',
+    
+    'Success usually comes to those who are too busy to be looking for it.\nSafalta aksar un logon ke paas aati hai jo ise dhoondne mein busy nahi hote.',
+    
+    'The way to get started is to quit talking and begin doing.\nShuru karne ka tareeka hai baat karna band karo aur karna shuru karo.',
+    
+    'Sleep when you are dead. Right now, there is work to be done.\nMarne ke baad so lena. Abhi kaam karna hai.',
+    
+    'Soft effort produces soft results. There is no other version of this equation.\nKamzor koshish se kamzor results milte hain. Is equation ka koi doosra version nahi hai.',
+    
+    'Nobody who ever gave everything they had looked back and said it was too much.\nJisne bhi apna sab kuch diya, usne kabhi peeche mudkar nahi kaha ki ye zyada ho gaya.',
+    
+    'You are not tired. You are just not hungry enough yet.\nAap thake nahi ho. Aapke andar abhi utni bhookh nahi hai.',
+    
+    'Work so hard that rest feels earned and not just scheduled.\nItni mehnat karo ki aaraam earned lage, sirf scheduled nahi.',
+    
+    'One hour of deep study beats five hours of pretending to study.\nEk ghante ki gehari padhai paanch ghante ki natak wali padhai se behtar hai.',
+    
+    'The exam does not care about your excuses. Neither does life.\nExam ko aapke bahane se koi fark nahi padta. Zindagi ko bhi nahi.',
+    
+    'Every concept you skip today will ambush you in the exam.\nAap aaj jo concept skip kar rahe ho wo exam mein aapko pakad lega.',
+    
+    'Stop highlighting. Start solving. One is comfort, the other is learning.\nHighlight karna band karo. Solve karna shuru karo. Ek comfort hai, doosra learning hai.',
+    
+    'Your marks are not about intelligence. They are about the hours you actually put in.\nAapke marks intelligence ke baare mein nahi hain. Wo un ghanton ke baare mein hain jo aapne actually lagaye hain.',
+    
+    'The syllabus is not the enemy. Procrastination is.\nSyllabus dushman nahi hai. Procrastination hai.',
+    
+    'Understanding beats memorising every single time in the long run.\nLong run mein samajhna har baar yaad karne se behtar hota hai.',
+    
+    'Everyone wants the result. Almost nobody wants to pay the price before seeing it.\nSabko result chahiye. Lekin koi bhi price pehle dena nahi chahta.',
+    
+    'The years you sacrifice in study are the decades you gain in freedom.\nJo saal aap padhai mein sacrifice karte ho, wo decades hain jo aapko freedom mein milte hain.',
+    
+    'Your friends are having fun tonight. Your future self will have options. Choose.\nAapke dost aaj raat maje kar rahe hain. Aapka future self options rakhega. Chuniye.',
+    
+    'Pleasure now is pain later. Pain now is freedom later.\nAbhi ka sukh baad ka dard hai. Abhi ka dard baad ki azaadi hai.',
+    
+    'While everyone was watching, you should have been working.\nJab sabhi dekh rahe the, tab aapko kaam karna chahiye tha.',
+    
+    'Comfort today is borrowed from your future. The interest rate is brutal.\nAaj ka aaraam aapke future se udhar liya hai. Interest rate bahut khatarnak hai.',
+    
+    'The party will happen every weekend for years. The window to build yourself will not.\nParty har weekend hoti rahegi. Khud ko banane ka window nahi milega.',
+    
+    'Your mind will quit a thousand times before your body does. Know that.\nAapka dimag aapke sharir se pehle hazaar baar haar manega. Ye jaan lo.',
+    
+    'The moment it gets hard is the exact moment it starts to matter.\nJab mushkil hota hai, tabhi ye matter karna shuru hota hai.',
+    
+    'Feelings are not facts. Do the work regardless of how you feel.\nFeelings facts nahi hain. Chahe kuch bhi feel ho, kaam karo.',
+    
+    'Nobody is going to believe in you until you give them undeniable proof.\nKoi aap par tab tak vishwas nahi karega jab tak aap undeniable proof nahi dete.',
+    
+    'Pressure reveals character. It does not build it. Build it now.\nPressure character reveal karta hai, build nahi karta. Abhi ise build karo.',
+    
+    'Stop protecting your ego. Start accepting where you actually are.\nApne ego ko protect karna band karo. Accept karo aap actually kaha ho.',
+    
+    'Hard is not bad. Hard is the filter that removes the uncommitted.\nMushkil bura nahi hai. Mushkil wo filter hai jo uncommitted logo ko hata deta hai.',
+    
+    'The world is not interested in your story. Only your results.\nDuniya ko aapki kahani mein koi interest nahi hai. Sirf aapke results mein hai.',
+    
+    'Nobody is thinking about you as much as you think. Use that freedom.\nKoi aapke baare mein utna nahi soch raha jitna aap sochte ho. Is freedom ko use karo.',
+    
+    'Time spent complaining is time stolen from building.\nShikayat karne mein jo time jata hai wo building se chori hua time hai.',
+    
+    'Your background does not determine your outcome. Your daily choices do.\nAapka background aapka outcome decide nahi karta. Aapke daily choices karte hain.',
+    
+    'Intelligence without work is just potential. Potential without execution is nothing.\nBina mehnat ki intelligence sirf potential hai. Bina execution ke potential kuch bhi nahi hai.',
+    
+    'The right time you are waiting for does not exist. There is only now.\nJo sahi time aap wait kar rahe ho wo exist nahi karta. Sirf abhi hai.',
+    
+    'People do not fail because they lack talent. They fail because they stop.\nLog talent ki kami se fail nahi hote. Wo rukne se fail hote hain.',
+    
+    'Stop announcing your goals. The work will announce them for you.\nApne goals announce karna band karo. Kaam unhe announce kar dega.',
+    
+    'Most regret in life comes not from trying and failing but from never trying.\nZindagi mein zyada regret try karke fail hone se nahi, kabhi try na karne se hota hai.',
+    
+    'The distance between your life now and the life you want is called work.\nAapki abhi ki zindagi aur jo zindagi aap chahte ho, us beech ka distance work kehta hai.',
+    
+    'You do not rise to your goals. You fall to the level of your identity.\nAap apne goals tak nahi uthte. Aap apni identity ke level tak girte ho.',
+    
+    'Act like the person you want to become before you feel like it.\nUs insaan ki tarah behave karo jo aap banna chahte ho, feel hone se pehle.',
+    
+    'One day you will meet the version of yourself you chose to build. Make it worth it.\nEk din aap khud ke us version se miloge jo aapne banana chuna. Use worth it banao.',
+    
+    'Stop asking if you can do it. Start asking if you are willing to pay for it.\nYe poochna band karo ki kya aap kar sakte ho. Ye poochna shuru karo ki kya aap iski price dene ke liye tayaar ho.',
+    
+    'The person who built something great was not more gifted. They were more obsessed.\nJisne kuch great banaya wo zyada gifted nahi tha. Wo zyada obsessed tha.',
+    
+    'Character is what you do when the result is not guaranteed.\nCharacter wo hai jo aap tab karte ho jab result guaranteed nahi hota.',
+    
+    'Stop waiting for motivation. Start acting on discipline.\nMotivation ka wait karna band karo. Discipline par action lena shuru karo.',
+    
+    'Small improvements every day lead to stunning results over time.\nHar din ki choti improvements time ke saath stunning results deti hain.',
+    
+    'It is not about being the best. It is about being better than you were yesterday.\nSabse best hona nahi hai baat. Kal se better hona hai.',
+    
+    'Your habits shape your identity. Your identity shapes your future.\nAapki aadatein aapki identity banati hain. Aapki identity aapka future banati hai.',
+    
+    'Success is not a destination. It is a journey of consistent effort.\nSafalta koi destination nahi hai. Ye consistent effort ka journey hai.'
 ];
-
 // Returns today's fallback quote based on day-of-year (feels fresh daily, no API needed)
 function getTodayFallback() {
     const now = new Date();
