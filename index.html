@@ -692,7 +692,21 @@ async function initQuoteOverlay() {
     overlay.classList.add('visible');
     applyOverlayTheme();
     const text = await fetchDailyQuote();
-    if (qt) qt.textContent = text;
+    
+    // Split English and Hindi by pipe separator
+    if (qt && text) {
+        const parts = text.split('|');
+        if (parts.length === 2) {
+            const mode = dark ? 'dark' : 'light';
+            qt.innerHTML = `
+                <div class="quote-text ${mode}">${parts[0].trim()}</div>
+                <div class="quote-separator ${mode}"></div>
+                <div class="quote-hindi ${mode}">${parts[1].trim()}</div>
+            `;
+        } else {
+            qt.textContent = text;
+        }
+    }
 }
 
 function closeQuoteOverlay() {
@@ -712,11 +726,22 @@ function openSettingsPanel() {
     overlay.classList.add('visible');
     applyOverlayTheme();
     syncToggle();
-    // Populate today's quote in settings
+  // Populate today's quote in settings
     const sqt = document.getElementById('settingsQuoteText');
     if (sqt) {
         const stored = getStoredQuote();
-        sqt.textContent = stored ? stored.text : getTodayFallback();
+        const text = stored ? stored.text : getTodayFallback();
+        const parts = text.split('|');
+        if (parts.length === 2) {
+            const mode = dark ? 'dark' : 'light';
+            sqt.innerHTML = `
+                <div class="sq-quote-text sq-${mode}">${parts[0].trim()}</div>
+                <div class="quote-separator ${mode}" style="margin: 0.8rem auto;"></div>
+                <div class="sq-quote-text sq-${mode}" style="font-size:0.78rem;">${parts[1].trim()}</div>
+            `;
+        } else {
+            sqt.textContent = text;
+        }
     }
     syncSettingsQuoteBox();
 }
