@@ -355,12 +355,12 @@
 <!-- ── QUOTE OVERLAY ─────────────────────────────────────────────────────── -->
 <div id="quoteOverlay">
     <div class="quote-backdrop light" id="quoteBackdrop"></div>
-    <!-- Music Button in Quote Overlay -->
-    <div class="music-btn" style="position: fixed; z-index: 10000;" onclick="toggleMusic()">
-        <div id="quote-music-icon" style="color: #5b5cf2;"></div>
-    </div>
     <!-- Quote view -->
-    <div id="quoteView" class="quote-card light" style="display:flex">
+<div id="quoteView" class="quote-card light" style="display:flex">
+        <!-- Music Button inside card -->
+        <div class="music-btn" onclick="toggleMusic()">
+            <div id="quote-music-icon"></div>
+        </div>
         <p class="quote-text light" id="quoteText">Loading…</p>
         <button class="proceed-btn light" id="proceedBtn" onclick="closeQuoteOverlay()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 14 0"/><path d="m13 6 6 6-6 6"/></svg>
@@ -390,14 +390,13 @@
         </div>
     </div>
 </div>
-
-<div id="shell">
-  <div id="scroll"></div>
-</div>
 <!-- Hidden audio element for background music -->
 <audio id="bgMusic" loop>
     <source src="vers.mp3" type="audio/mpeg">
 </audio>
+<div id="shell">
+  <div id="scroll"></div>
+</div>
 
 <script>
 // ── SERVICE WORKER ─────────────────────────────────────────────────────────
@@ -420,7 +419,8 @@ const I = {
     retry:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`,
     x:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12"/></svg>`,
     gear:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>`,
-    speaker:`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    // gear:`<svg width="18" height="18"...></svg>`,
+  speaker:`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
     <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
   </svg>`,
@@ -428,8 +428,9 @@ const I = {
     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
     <line x1="23" y1="9" x2="17" y2="15"/>
     <line x1="17" y1="9" x2="23" y2="15"/>
-  </svg>`,
+  </svg>`
 };
+
 
 // ── ADAPTIVE DARK MODE ─────────────────────────────────────────────────────
 // Initialise from system preference; manual toggle overrides from here on
@@ -531,6 +532,8 @@ const bgMusic = document.getElementById('bgMusic');
 
 // Toggle background music
 function toggleMusic() {
+    if (!bgMusic) return;
+    
     if (musicPlaying) {
         bgMusic.pause();
         musicPlaying = false;
@@ -540,16 +543,35 @@ function toggleMusic() {
         });
         musicPlaying = true;
     }
-    // Update music button icon
-    const musicBtn = document.querySelector('.music-btn');
-    if (musicBtn) {
-        const icon = musicBtn.querySelector('div');
-        if (icon) {
-            icon.innerHTML = musicPlaying ? I.speaker : I.speakerOff;
+    
+    // Add/remove playing class for animation
+    const allMusicBtns = document.querySelectorAll('.music-btn');
+    allMusicBtns.forEach(btn => {
+        if (musicPlaying) {
+            btn.classList.add('playing');
+        } else {
+            btn.classList.remove('playing');
         }
-    }
+    });
+    
+    updateMusicButtons();
 }
 
+function updateMusicButtons() {
+    const dm = dark;
+    
+    // Quote overlay button
+    const qIcon = document.getElementById('quote-music-icon');
+    if (qIcon) {
+        qIcon.style.color = dm ? '#d4af37' : '#5b5cf2';
+        qIcon.innerHTML = musicPlaying ? I.speaker : I.speakerOff;
+    }
+    
+    // Setup screen - repaint needed
+    if (screen === 'setup') {
+        paint();
+    }
+}
 // ── QUOTE SYSTEM ───────────────────────────────────────────────────────────
 
 // 60 powerful quotes with Hindi translations (pipe-separated)
@@ -686,15 +708,12 @@ if (parts.length === 2) {
     `;
 } else {
     // Single line quote ke liye bhi mb-10 add kiya
-    qt.innerHTML = `<div class="quote-text ${mode} mb-5">${qOpen}${text}${qClose}</div>`;
+qt.innerHTML = `<div class="quote-text ${mode} mb-5">${qOpen}${text}${qClose}</div>`;
 }
     }
+    
     // Update music icon
-    const musicIcon = document.getElementById('quote-music-icon');
-    if (musicIcon) {
-        musicIcon.style.color = dark ? '#d4af37' : '#5b5cf2';
-        musicIcon.innerHTML = musicPlaying ? I.speaker : I.speakerOff;
-    }
+    updateMusicButtons();
 }
 
 function closeQuoteOverlay() {
@@ -882,15 +901,11 @@ function setupHTML() {
     const gearColor = dm ? '#94a3b8' : '#94a3b8';
     return `
     <div class="card-wrap fade-up">
-        <div class="card-wrap fade-up">
-      <!-- Music Button (Left) -->
-      <div class="music-btn" onclick="toggleMusic()">
-        <div style="color: ${dm?'#94a3b8':'#94a3b8'};">
+<div class="relative flex flex-col items-center w-full px-5 pt-8 pb-5 rounded-[2.5rem] shadow-2xl ${dm?'bg-[#1a2333] text-white':'bg-white text-slate-800'}">
+        <!-- Music button -->
+        <button class="music-btn" onclick="toggleMusic()" style="opacity:0.55;color:${dm?'#94a3b8':'#94a3b8'}">
           ${musicPlaying ? I.speaker : I.speakerOff}
-        </div>
-      </div>
-      <div class="relative flex flex-col items-center w-full px-5 pt-8 pb-5 rounded-[2.5rem] shadow-2xl ${dm?'bg-[#1a2333] text-white':'bg-white text-slate-800'}">
-      <div class="relative flex flex-col items-center w-full px-5 pt-8 pb-5 rounded-[2.5rem] shadow-2xl ${dm?'bg-[#1a2333] text-white':'bg-white text-slate-800'}">
+        </button>
         <!-- Gear button -->
         <button class="gear-btn" onclick="openSettingsPanel()" title="Settings" style="opacity:0.55;color:${gearColor}">
           ${I.gear}
