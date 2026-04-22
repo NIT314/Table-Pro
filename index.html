@@ -1473,6 +1473,7 @@ self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r
 
          // --- updateCDWidget ke andar ka INNER HTML replace karein ---
 
+
 widget.innerHTML = `
     <div style="
         background:${cardBg};
@@ -1489,7 +1490,7 @@ widget.innerHTML = `
             border-radius:1.4rem;
             padding:1.2rem 1.4rem;
         ">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+            <div style="display:flex; align-items:stretch; justify-content:space-between; margin-bottom:0.5rem;">
                 <div style="display:flex; align-items:center; gap:1.1rem;">
                     <span style="font-size:3.5rem; font-weight:900; color:${accent}; line-height:0.9; letter-spacing:-3px;">
                         ${daysLeft}
@@ -1501,7 +1502,7 @@ widget.innerHTML = `
                     </div>
                 </div>
 
-                <div style="text-align:right; align-self:center; font-size:0.75rem; font-weight:800; color:${textMain}; opacity:0.8;">
+                <div style="text-align:right; align-self:flex-end; padding-bottom:5px; font-size:0.75rem; font-weight:800; color:${textMain}; opacity:0.8;">
                     ${data && data.dest ? new Date(data.dest).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}
                 </div>
             </div>
@@ -1516,6 +1517,7 @@ widget.innerHTML = `
         </div>
     </div>
 `;
+
 
         }
 
